@@ -7,12 +7,12 @@ module Jobs
 		end
 
 		def execute(args)
-			api_key = 'yay'
-			address = '192.168.1.126'
+			api_key = SiteSettings.geoffrey_api_key
+			address = SiteSettings.geoffrey_target_domain
 
 			method = args['method']
 
-			uri = URI.parse("http://#{address}:8080/api#{method}?key=#{api_key}")
+			uri = URI.parse("http://#{address}/api#{method}?key=#{api_key}")
 			http = Net::HTTP.new(uri.host, uri.port)
 			request = Net::HTTP::Post.new(uri.request_uri)
 			response = http.request(request, JSON.dump(args))
