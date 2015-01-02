@@ -2,7 +2,10 @@ geoffrey:
   geoffrey_api_key:
     default: "yay"
     client: false
-  geoffrey_target_domain:
-   default: "192.168.1.126:8080"
-   client: false
+  geoffrey_public_key:
+    default: "geoffrey"
+    client: true
+  geoffrey_endpoint:
+   default: "http://192.168.1.126:8080/"
+   client: true
    hidden: true
