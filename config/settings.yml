@@ -1,11 +1,11 @@
 geoffrey:
   geoffrey_api_key:
-    default: "yay"
+    default: "geoffreybot:test@geoffrey"
     client: false
   geoffrey_public_key:
     default: "geoffrey"
     client: true
   geoffrey_endpoint:
-   default: "http://192.168.1.126:8080/"
+   default: "http://geoffrey.dev/"
    client: true
    hidden: true

@@ -1,51 +1,60 @@
 require 'net/http'
 
+GEOF_DEBUG = true
 
 module Jobs
 	class SendToGeof < Jobs::Base
 
 		def self.supported_models
 			#soon to come:
-			#[:badge, :category, :group, :invite, :post_upload, :post_action]
-			[:user, :user_action]
+			#[:post, :topic, :badge, :category, :group, :invite, :post_upload, :post_action]
+			#[:user, :user_action]
+			[:topic, :post]
 		end
 
-		def execute(method, item_id)
-			send(method, item_id)
+		def execute(opts)
+			send(opts[:method], opts[:item_id])
 		end
 
 		supported_models.each do |cls|
 		    class_eval %{def #{cls}_create(id)
-		    	request("/#{cls}/new/",
+		    	request("/trigger/#{cls}/new",
 					MultiJson.dump(
 						Object.const_get("#{cls}_serializer".camelize()).new(
-							Object.const_get("#{cls}".camelize()).find(id))))
-		    end}
-		    class_eval %{def #{cls}_save(id)
-		    	request("/#{cls}/update/",
+							Object.const_get("#{cls}".camelize()).find(id),
+							scope: Guardian.new)))
+		    end
+
+		    def #{cls}_save(id)
+		    	request("/trigger/#{cls}/update",
 					MultiJson.dump(
 						Object.const_get("#{cls}_serializer".camelize()).new(
-							Object.const_get("#{cls}".camelize()).find(id))))
+							Object.const_get("#{cls}".camelize()).find(id),
+							scope: Guardian.new)))
 		    end}
 		end
 
-		def post_create(post_id)
-			post = Post.find(post_id)
-			# soon tocome
-			# if post.post_number == 1
-			# 	request("/topic/new",)
+		# def post_create(post_id)
+		# 	post = Post.find(post_id)
+		# 	# soon tocome
+		# 	# if post.post_number == 1
+		# 	# 	request("/topic/new",)
 
-			# else
-			request("/post/new/",
-					MultiJson.dump(PostSerializer.new(post)))
-			# end
-		end
+		# 	# else
+		# 	request("/post/new/",
+		# 			MultiJson.dump(PostSerializer.new(post)))
+		# 	# end
+		# end
 
 		private
 
 		def request(method, payload)
-			api_key = SiteSettings.geoffrey_api_key
-			address = SiteSettings.geoffrey_endpoint
+			api_key = SiteSetting.geoffrey_api_key
+			address = SiteSetting.geoffrey_endpoint
+
+			if GEOF_DEBUG and ENV.has_key? "SSH_CLIENT"
+				address = "http://" + ENV["SSH_CLIENT"].split(" ")[0] + ":8091"
+			end
 
 			# FIXME: add HTTPS support!
 			uri = URI.parse("#{address}/api#{method}?key=#{api_key}")
@@ -65,26 +74,28 @@ end
 module GeoffreyObserver
 
 	def self.included(klass)
-		klass.after_create :_geof_create
-		klass.after_save :_geof_save
+		klass.after_create { _geof_perform "create"}
+		klass.after_save { _geof_perform "save"}
 	end
 
-	def _geof_create
-		geof = Jobs::SendToGeof.new
-		geof.perform('#{name}_create', id)
+	def _geof_perform(fun)
+		params = {
+			:method => "#{self.class.name.demodulize.underscore}_#{fun}",
+			:item_id => id
+		  }
 
-		#Jobs.enqueue(:send_to_geof, '#{name}_create', id)
-	end
+		return Thread.new do
+			sleep(1)
+			Jobs::SendToGeof.new.perform(params)
+		end if GEOF_DEBUG
 
-	def _geof_save
-		geof = Jobs::SendToGeof.new
-		geof.perform('#{name}_save', id)
-		#Jobs.enqueue(:send_to_geof, '#{name}_save', id)
+		Jobs.enqueue(:send_to_geof, *params)
+
 	end
 end
 
 
-# Jobs::SendToGeof::supported_models.each do |cls|
-# 	Object.const_get("#{cls}".camelize).send(:include, GeoffreyObserver)
-# end
+Jobs::SendToGeof::supported_models.each do |cls|
+	Object.const_get("#{cls}".camelize).send(:include, GeoffreyObserver)
+end
 
