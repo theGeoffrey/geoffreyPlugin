@@ -100,3 +100,19 @@ Jobs::SendToGeof::supported_models.each do |cls|
   Object.const_get("#{cls}".camelize).send(:include, GeoffreyObserver)
 end
 
+class Admin::GeoffreyController < Admin::AdminController
+  # skip_before_filter :check_xhr, only: [:index, :config]
+
+  def endpoint
+    endpoint = "#{SiteSetting.geoffrey_endpoint}dashboard/#/login/#{SiteSetting.geoffrey_api_key}/"
+    render json: {endpoint: endpoint}
+  end
+end
+
+Discourse::Application.routes.append do
+  namespace :admin do
+    get "geoffrey" => "geoffrey#index", constraints: AdminConstraint.new
+    get "geoffrey/config" => "geoffrey#endpoint", constraints: AdminConstraint.new
+  end
+end
+

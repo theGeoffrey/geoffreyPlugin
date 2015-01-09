@@ -5,6 +5,7 @@
 
 
 register_asset "javascripts/geoffrey.js"
+register_asset "geoffrey.scss"
 
 after_initialize do
   require_dependency File.expand_path('../integrate.rb', __FILE__)
