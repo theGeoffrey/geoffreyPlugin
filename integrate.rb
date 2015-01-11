@@ -1,6 +1,6 @@
 require 'net/http'
 
-GEOF_DEBUG = false
+GEOF_DEBUG = true
 
 module Jobs
   class SendToGeof < Jobs::Base
@@ -90,7 +90,7 @@ module GeoffreyObserver
       Jobs::SendToGeof.new.perform(params)
     end if GEOF_DEBUG
 
-    Jobs.enqueue(:send_to_geof, *params)
+    Jobs.enqueue(:send_to_geof, params)
 
   end
 end
