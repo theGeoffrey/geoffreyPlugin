@@ -104,7 +104,8 @@ class Admin::GeoffreyController < Admin::AdminController
   # skip_before_filter :check_xhr, only: [:index, :config]
 
   def endpoint
-    endpoint = "#{SiteSetting.geoffrey_endpoint}dashboard/#/login/#{SiteSetting.geoffrey_api_key}/"
+    key = Base64.encode64 SiteSetting.geoffrey_api_key
+    endpoint = "#{SiteSetting.geoffrey_endpoint}dashboard/#/login/#{key}/"
     render json: {endpoint: endpoint}
   end
 end
