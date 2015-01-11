@@ -9,7 +9,7 @@ module Jobs
       #soon to come:
       #[:post, :topic, :badge, :category, :group, :invite, :post_upload, :post_action]
       #[:user, :user_action]
-      [:topic, :post]
+      [:topic, :post, :user]
     end
 
     def execute(opts)
