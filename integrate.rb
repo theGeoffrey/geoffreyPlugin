@@ -110,7 +110,27 @@ class Admin::GeoffreyController < Admin::AdminController
   end
 end
 
+GEOFFREYSESSIONKEY = "GEOFFREYSESSION"
+
+class PublicGeoffreyController < ApplicationController
+  before_filter :ensure_logged_in
+
+  def user_session
+    sid = current_user.custom_fields[GEOFFREYSESSIONKEY]
+    render json: {id: sid || begin
+        url = "#{SiteSetting.geoffrey_endpoint}api/session/create?key=#{SiteSetting.geoffrey_api_key}"
+        body = "{\"username\": \"#{current_user.username_lower}\" }"
+        JSON.parse(
+          Excon.post(url,
+            :body => body,
+            :read_timeout => 10, :connect_timeout => 10
+          ).body)["id"]
+    end}
+  end
+end
+
 Discourse::Application.routes.append do
+  get "geoffrey/session" => "public_geoffrey#user_session"
   namespace :admin do
     get "geoffrey" => "geoffrey#index", constraints: AdminConstraint.new
     get "geoffrey/config" => "geoffrey#endpoint", constraints: AdminConstraint.new
