@@ -6,6 +6,6 @@ geoffrey:
     default: "geoffrey"
     client: true
   geoffrey_endpoint:
-   default: "http://geoffrey.dev/"
+   default: "http://thegeoffrey.co/"
    client: true
    hidden: true
